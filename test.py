@@ -1,11 +1,11 @@
 import mysql.connector
 from getpass import getpass
 
-def create_connection(username = "root", password = "fbciao12321"):
+def create_connection():
     connection = mysql.connector.connect(
         host="localhost",
-        user=username,
-        password=password,
+        user="root",
+        password="fbciao12321",
         database="resturantManagement",
         auth_plugin="mysql_native_password"
     )
@@ -107,6 +107,21 @@ def dashboard(connection):
 #
 
 #MENU MANAGEMENT
+
+def display_restaurant_menu(connection, restaurant_id):
+    cursor = connection.cursor()
+
+    query = """
+        SELECT * FROM menu_items WHERE resturant_id = %s;
+    """
+
+    cursor.execute(query, (restaurant_id,))
+    menu_items = cursor.fetchall()
+
+    print("Menu:")
+    for item in menu_items:
+        print(f"ID: {item[0]}, Name: {item[1]}, Description: {item[2]}, Type: {item[3]}, Price: {item[4]}, Restaurant ID: {item[5]}")
+
 def add_menu_item(connection, restaurant_id):
     name = input("Enter the menu item name: ")
     description = input("Enter the menu item description: ")
@@ -211,34 +226,76 @@ def display_employee_list(connection, restaurant_id): #NEED TO MAKE THIS BY REST
         print(f"ID: {employee[0]}, Name: {employee[1]}, Role: {employee[2]}, Username: {employee[3]}, Resturant ID: {employee[5]}")
 
 #ORDER MANAGEMENT
-def create_new_order(connection): # NEED TO ADD RESTAURANT
+# def create_new_order(connection, restaurant_id):
+#     table_num = int(input("Enter the table number: "))
+#     customer_num = int(input("Enter the number of customers: "))
+#
+#     cursor = connection.cursor()
+#
+#     query = """
+#         INSERT INTO customer_group (table_num, customer_num)
+#         VALUES (%s, %s);
+#     """
+#
+#     cursor.execute(query, (table_num, customer_num))
+#     connection.commit()
+#     customer_group_id = cursor.lastrowid
+#
+#     query = """
+#         INSERT INTO orders (status, customer_group_id)
+#         VALUES ('In Progress', %s);
+#     """
+#
+#     cursor.execute(query, (customer_group_id,))
+#     connection.commit()
+#     order_id = cursor.lastrowid
+#
+#     print(f"New order created with Order ID: {order_id}")
+#     return order_id
+def create_new_order(connection, restaurant_id):
     table_num = int(input("Enter the table number: "))
     customer_num = int(input("Enter the number of customers: "))
 
     cursor = connection.cursor()
 
     query = """
-        INSERT INTO customer_group (table_num, customer_num)
-        VALUES (%s, %s);
+        INSERT INTO customer_group (table_num, customer_num, resturant_id)
+        VALUES (%s, %s, %s);
     """
 
-    cursor.execute(query, (table_num, customer_num))
+    cursor.execute(query, (table_num, customer_num, restaurant_id))
     connection.commit()
     customer_group_id = cursor.lastrowid
 
     query = """
-        INSERT INTO orders (status, customer_group_id)
-        VALUES ('In Progress', %s);
+        INSERT INTO orders (customer_group_id, status)
+        VALUES (%s, 'In Progress');
     """
 
     cursor.execute(query, (customer_group_id,))
     connection.commit()
     order_id = cursor.lastrowid
 
-    print(f"New order created with Order ID: {order_id}")
+    while True:
+        menu_item_id = int(input("Enter the dish ID: "))
+        quantity = int(input("Enter the quantity: "))
+
+        query = """
+            INSERT INTO menu_order (menu_item_id, order_id, amount)
+            VALUES (%s, %s, %s);
+        """
+
+        cursor.execute(query, (menu_item_id, order_id, quantity))
+        connection.commit()
+
+        more_dishes = input("Do you want to add more dishes? (yes/no): ")
+        if more_dishes.lower() != 'yes':
+            break
+
     return order_id
 
-def add_menu_items_to_order(connection, order_id): # NEED TO Specify Restaurant
+
+def add_menu_items_to_order(connection, order_id):
     while True:
         menu_item_id = int(input("Enter the menu item ID to add (0 to stop): "))
         if menu_item_id == 0:
@@ -260,7 +317,7 @@ def add_menu_items_to_order(connection, order_id): # NEED TO Specify Restaurant
         print(f"Added {amount} of menu item ID {menu_item_id} to Order ID {order_id}")
 
 
-def update_order_status(connection, order_id): #Add restaurant id
+def update_order_status(connection, order_id):
     new_status = input("Enter the new order status (In Progress, Complete): ")
 
     cursor = connection.cursor()
@@ -333,15 +390,43 @@ def calculate_bill(connection, order_id):
 #             return selected_restaurant[0][0]
 #         else:
 #             print("Invalid restaurant ID. Please try again.")
+# def select_restaurant(connection, username):
+#     with connection.cursor() as cursor:
+#         query = f"""
+#         SELECT r.resturant_id, r.name
+#         FROM employee re
+#         JOIN resturant r ON re.resturant_id = r.resturant_id
+#         WHERE re.username = '{username}'
+#         """
+#         cursor.execute(query)
+#         restaurants = cursor.fetchall()
+#
+#         if len(restaurants) == 0:
+#             print("You are not associated with any restaurants.")
+#             return None
+#
+#         print("\nPlease select a restaurant:")
+#         for i, restaurant in enumerate(restaurants):
+#             print(f"{i + 1}. {restaurant[1]}")  # Change this line
+#
+#         while True:
+#             try:
+#                 choice = int(input("Enter the number corresponding to the restaurant: "))
+#                 if 1 <= choice <= len(restaurants):
+#                     return restaurants[choice - 1][0]  # Change this line
+#                 else:
+#                     print("Invalid choice. Please try again.")
+#             except ValueError:
+#                 print("Invalid input. Please enter a number.")
 def select_restaurant(connection, username):
     with connection.cursor() as cursor:
-        query = f"""
+        query = """
         SELECT r.resturant_id, r.name
         FROM employee re
         JOIN resturant r ON re.resturant_id = r.resturant_id
-        WHERE re.username = '{username}'
+        WHERE re.username = %s;
         """
-        cursor.execute(query)
+        cursor.execute(query, (username,))
         restaurants = cursor.fetchall()
 
         if len(restaurants) == 0:
@@ -350,13 +435,13 @@ def select_restaurant(connection, username):
 
         print("\nPlease select a restaurant:")
         for i, restaurant in enumerate(restaurants):
-            print(f"{i + 1}. {restaurant[1]}")  # Change this line
+            print(f"{i + 1}. {restaurant[1]}")
 
         while True:
             try:
                 choice = int(input("Enter the number corresponding to the restaurant: "))
                 if 1 <= choice <= len(restaurants):
-                    return restaurants[choice - 1][0]  # Change this line
+                    return restaurants[choice - 1][0]
                 else:
                     print("Invalid choice. Please try again.")
             except ValueError:
@@ -384,10 +469,11 @@ def main():
         print("3. Remove Employee")
         print("4. Add Menu Item")
         print("5. Remove Menu Item")
-        print("6. Create New Order")
-        print("7. Add Menu Items to Order")
-        print("8. Update Order Status")
-        print("9. Calculate Bill")
+        print("6. Display Restaurant Menu")
+        print("7. Create New Order")
+        print("8. Add Menu Items to Order")
+        print("9. Update Order Status")
+        print("10. Calculate Bill")
         print("0. Exit")
 
         try:
@@ -403,22 +489,24 @@ def main():
         elif choice == 3:
             remove_employee(connection)
         elif choice == 4:
-            add_menu_item(connection)
+            add_menu_item(connection, restaurant_id)
         elif choice == 5:
             remove_menu_item(connection)
         elif choice == 6:
-            order_id = create_new_order(connection)
+            display_restaurant_menu(connection, restaurant_id)
         elif choice == 7:
+            order_id = create_new_order(connection, restaurant_id)
+        elif choice == 8:
             if 'order_id' in locals():
                 add_menu_items_to_order(connection, order_id)
             else:
                 print("Create a new order first.")
-        elif choice == 8:
+        elif choice == 9:
             if 'order_id' in locals():
                 update_order_status(connection, order_id)
             else:
                 print("Create a new order first.")
-        elif choice == 9:
+        elif choice == 10:
             if 'order_id' in locals():
                 calculate_bill(connection, order_id)
             else:
@@ -432,3 +520,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+#need to be asked which order you refer to when making orders. for now its only one at a time
+#Automatically make order in progress once order is created

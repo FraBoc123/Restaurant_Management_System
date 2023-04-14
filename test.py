@@ -1,56 +1,66 @@
 import mysql.connector
 from getpass import getpass
 
+# Established Database Connection
 def create_connection():
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="fbciao12321",
-        database="resturantManagement",
-        auth_plugin="mysql_native_password"
-    )
+
+    noError = True
+
+    while noError:
+        try:
+            username = input("Enter your database username: ")
+            password = getpass("Enter your database password: ")
+
+            connection = mysql.connector.connect(
+                host="localhost",
+                user=username,
+                password=password,
+                database="resturantManagement",
+                auth_plugin="mysql_native_password"
+            )
+
+            noError = False
+        except mysql.connector.Error as error:
+            print("Error connecting to the database.")
+            print('Fix Username or Password')
+            noError = True
+
+    print("Database Connection Established \n")
     return connection
 
-
+# Closes Database Connection
 def close_connection(connection):
     if connection.is_connected():
         connection.close()
         print("MySQL connection is closed")
 
-def login():
-    username = input("Enter your username: ")
-    password = getpass("Enter your password: ")
-
-    connection = None
+# Login to an employee account
+def login(connection):
     user_role = None
 
-    # Connect to the database using the application's MySQL user
-    try:
-        connection = create_connection()
-        cursor = connection.cursor()
+    cursor = connection.cursor()
 
-        # Check if the username is one of the pre-set logins
-        if username in ["owner_admin", "manager", "staff"]:
-            user_role = username
+    username = input("Enter your employee username: ")
+    password = getpass("Enter your employee password: ")
+
+    # Check if the username is one of the pre-set logins
+    if username in ["owner_admin", "manager", "staff"]:
+        user_role = username
+    else:
+        query = """
+            SELECT role FROM employee WHERE username = %s AND password = %s;
+        """
+
+        cursor.execute(query, (username, password))
+        result = cursor.fetchone()
+
+        if result:
+            user_role = result[0]
         else:
-            query = """
-                SELECT role FROM employee WHERE username = %s AND password = %s;
-            """
+            print("Invalid username or password.")
+            return None, None
 
-            cursor.execute(query, (username, password))
-            result = cursor.fetchone()
-
-            if result:
-                user_role = result[0]
-            else:
-                print("Invalid username or password.")
-                return None, None
-
-    except mysql.connector.Error as error:
-        print("Error connecting to the database.")
-        return None, None
-
-    return connection, user_role, username
+    return user_role, username
 
 # def login():
 #     username = input("Enter your username: ")
@@ -282,10 +292,11 @@ def create_new_order(connection, restaurant_id):
 
         query = """
             INSERT INTO menu_order (menu_item_id, order_id, amount)
-            VALUES (%s, %s, %s);
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE amount = amount + %s;
         """
 
-        cursor.execute(query, (menu_item_id, order_id, quantity))
+        cursor.execute(query, (menu_item_id, order_id, quantity, quantity))
         connection.commit()
 
         more_dishes = input("Do you want to add more dishes? (yes/no): ")
@@ -318,7 +329,11 @@ def add_menu_items_to_order(connection, order_id):
 
 
 def update_order_status(connection, order_id):
-    new_status = input("Enter the new order status (In Progress, Complete): ")
+    incorrectStatus = True;
+
+    while incorrectStatus:
+        new_status = input("Enter the new order status (In Progress, Complete): ")
+        incorrectStatus = not (new_status.lower() == "in progress" or new_status.lower() == "complete")
 
     cursor = connection.cursor()
 
@@ -450,11 +465,11 @@ def select_restaurant(connection, username):
 
 
 def main():
-    connection = None
+    connection = create_connection()
     user_role = None
     username = None
     while connection is None or user_role is None:
-        connection, user_role, username = login()
+        user_role, username = login(connection)
 
     #select restaurant
     restaurant_id = None

@@ -50,8 +50,11 @@ CREATE TABLE customer_group     -- NEED TO ADD RESTAURANT ID - MAYBE EACH RESTAU
 (
 	customer_group_id INT AUTO_INCREMENT PRIMARY KEY,
     table_num INT NOT NULL,
-    customer_num INT NOT NULL
+    customer_num INT NOT NULL,
+    resturant_id INT NOT NULL,
+    FOREIGN KEY (resturant_id) REFERENCES resturant(resturant_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
 drop table if exists `orders`;
 CREATE TABLE orders
 (
@@ -135,11 +138,12 @@ VALUES
   (5, 'Tiramisu', 'Classic Italian dessert with ladyfingers, espresso, mascarpone cheese, and cocoa', 'Dessert', 7.99, 1);
 
 
-INSERT INTO customer_group (customer_group_id, table_num, customer_num)
-VALUES
-  (1, 1, 2),
-  (2, 2, 4),
-  (3, 3, 6);
+INSERT INTO customer_group (customer_group_id, table_num, customer_num, resturant_id) 
+VALUES   
+  (1, 1, 2, 1),   
+  (2, 2, 4, 1),   
+  (3, 3, 6, 2);
+
 
 
 INSERT INTO orders (order_id, status, customer_group_id)

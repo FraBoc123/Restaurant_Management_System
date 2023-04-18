@@ -12,6 +12,7 @@ CREATE TABLE resturant
     description VARCHAR(500) NOT NULL
 );
 drop table if exists `employee`;
+
 -- updated pk constraints
 CREATE TABLE employee
 (
@@ -33,6 +34,7 @@ CREATE TABLE shifts
     time TIME NOT NULL,
     date DATE NOT NULL
 );
+
 drop table if exists `menu_items`;
 CREATE TABLE menu_items
 (
@@ -44,6 +46,7 @@ CREATE TABLE menu_items
 	resturant_id INT,
     FOREIGN KEY (resturant_id) REFERENCES resturant(resturant_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
 -- added auto increment
 drop table if exists `customer_group`;
 CREATE TABLE customer_group     -- NEED TO ADD RESTAURANT ID - MAYBE EACH RESTAURANT HAS TABLES AND SEATING FOR EACH TABLE 
@@ -63,6 +66,7 @@ CREATE TABLE orders
     customer_group_id INT,
     FOREIGN KEY (customer_group_id) REFERENCES customer_group(customer_group_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
 drop table if exists `ingredients`;
 CREATE TABLE ingredients
 (
@@ -102,6 +106,38 @@ CREATE TABLE menu_ingredients
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(menu_item_id) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+
+-- create procedures
+drop procedure if exists add_menu_order;
+
+delimiter $$
+create procedure add_menu_order(menu_item_id_p INT, order_id_p INT, amount_p INT)
+	begin
+        if (select exists(select * from menu_items where menu_items.menu_item_id = menu_item_id_p)) then
+			INSERT INTO menu_order (menu_item_id, order_id, amount)
+            VALUES (menu_item_id_p, order_id_p, amount_p)
+            ON DUPLICATE KEY UPDATE amount = amount + amount_p;
+		else
+			select 'Menu Item Not Available';
+			signal sqlstate '42000' set message_text = 'Menu Item not found';
+		end if;
+    end $$
+delimiter ;
+
+drop procedure if exists get_order_details;
+
+delimiter $$
+create procedure get_order_details(order_id_p INT)
+	begin
+        SELECT menu_items.menu_item_id, menu_items.name, menu_items.price, menu_order.amount
+        FROM menu_items
+        INNER JOIN menu_order ON menu_items.menu_item_id = menu_order.menu_item_id
+        WHERE menu_order.order_id = order_id_p;
+    end $$
+delimiter ;
+
+
 
 -- inserting values into tables
 INSERT INTO resturant (resturant_id, name, address, description)

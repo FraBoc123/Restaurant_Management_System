@@ -291,12 +291,10 @@ def create_new_order(connection, restaurant_id):
         quantity = int(input("Enter the quantity: "))
 
         query = """
-            INSERT INTO menu_order (menu_item_id, order_id, amount)
-            VALUES (%s, %s, %s)
-            ON DUPLICATE KEY UPDATE amount = amount + %s;
+            call add_menu_order(%s, %s, %s);
         """
 
-        cursor.execute(query, (menu_item_id, order_id, quantity, quantity))
+        cursor.execute(query, (menu_item_id, order_id, quantity))
         connection.commit()
 
         more_dishes = input("Do you want to add more dishes? (yes/no): ")
@@ -317,19 +315,17 @@ def add_menu_items_to_order(connection, order_id):
         cursor = connection.cursor()
 
         query = """
-            INSERT INTO menu_order (menu_item_id, order_id, amount)
-            VALUES (%s, %s, %s)
-            ON DUPLICATE KEY UPDATE amount = amount + %s;
+            call add_menu_order(%s, %s, %s);
         """
 
-        cursor.execute(query, (menu_item_id, order_id, amount, amount))
+        cursor.execute(query, (menu_item_id, order_id, amount))
         connection.commit()
 
         print(f"Added {amount} of menu item ID {menu_item_id} to Order ID {order_id}")
 
 
 def update_order_status(connection, order_id):
-    incorrectStatus = True;
+    incorrectStatus = True
 
     while incorrectStatus:
         new_status = input("Enter the new order status (In Progress, Complete): ")
@@ -349,32 +345,35 @@ def update_order_status(connection, order_id):
     print(f"Order ID {order_id} status updated to {new_status}")
 
 def calculate_bill(connection, order_id):
-    cursor = connection.cursor()
+    try:
+        cursor = connection.cursor()
 
-    query = """
-        SELECT menu_items.menu_item_id, menu_items.name, menu_items.price, menu_order.amount
-        FROM menu_items
-        INNER JOIN menu_order ON menu_items.menu_item_id = menu_order.menu_item_id
-        WHERE menu_order.order_id = %s;
-    """
+        query = """
+            SELECT menu_items.menu_item_id, menu_items.name, menu_items.price, menu_order.amount
+            FROM menu_items
+            INNER JOIN menu_order ON menu_items.menu_item_id = menu_order.menu_item_id
+            WHERE menu_order.order_id = %s;
+        """
 
-    cursor.execute(query, (order_id,))
-    order_items = cursor.fetchall()
+        cursor.execute(query, (order_id,))
+        order_items = cursor.fetchall()
 
-    if not order_items:
-        print(f"No order found with Order ID {order_id}")
-        return
+        if not order_items:
+            print(f"No order found with Order ID {order_id}")
+            return
 
-    total_price = 0
+        total_price = 0
 
-    print(f"Bill for Order ID {order_id}:")
-    for item in order_items:
-        item_id, name, price, amount = item
-        item_total_price = price * amount
-        total_price += item_total_price
-        print(f"Menu Item ID: {item_id}, Name: {name}, Price: {price}, Amount: {amount}, Total Price: {item_total_price}")
+        print(f"Bill for Order ID {order_id}:")
+        for item in order_items:
+            item_id, name, price, amount = item
+            item_total_price = price * amount
+            total_price += item_total_price
+            print(f"Menu Item ID: {item_id}, Name: {name}, Price: {price}, Amount: {amount}, Total Price: {item_total_price}")
 
-    print(f"Total Bill: {total_price}")
+        print(f"Total Bill: {total_price}")
+    except:
+        print("error")
 
 #PROMPT USER FOR RESTAURANT BEFORE SHOWING DASHBOARD
 # def select_restaurant(connection, username):
@@ -527,11 +526,10 @@ def main():
             else:
                 print("Create a new order first.")
         elif choice == 0:
+            connection.close()
             break
         else:
             print("Invalid choice. Please try again.")
-
-    connection.close()
 
 if __name__ == "__main__":
     main()

@@ -1,43 +1,58 @@
+Requirements:
+Python 3.x installed (download from https://www.python.org/downloads/)
+MySQL server installed and configured. (download from https://dev.mysql.com/downloads/mysql/)
+A MySQL client (e.g., MySQL Workbench, phpMyAdmin, etc.) to set up the database schema
 
 
-## Restaurant Management System
+Installation:
+Unzip the files. You should see a `Restaurant_Engine.py` python file that contains our application, and a `CS5200_ResManagementDb.sql` SQL file that contains our database.
+Open the SQL file in mySQL workbench and run the file (everything).
+Open “Restaurant_Engine.py” file with your python interpreter. (We used PyCharm)
+Install package: mysql-connector-python==8.0.27
+Do this by writing and running the following command on the terminal window:
+pip install mysql-connector-python==8.0.27
+Run “Restaurant_Engine.py” file to start application.
+Use the terminal window as an interface to use the application.
+Please make sure all files are in the same working directory.
 
-This is a console-based application that simulates a restaurant management system. This application is built using Python 3.8 and uses MySQL for its database. The system allows restaurant staff to manage the menu and orders, and the system's owner to manage the restaurant staff and other administrative tasks. 
 
-## Installation
+Usage:
+Upon running the application, you will be prompted to log in either as an owner, manager, or staff member before being prompted to use your personal login information.
 
-To use the Restaurant Management System, follow these steps:
+Primary Login/Authentication: 
+after starting the application you will be prompted to enter one of four preset usernames and passwords that identify you as a certain staff member.
+Usernames with their respective passwords are:
+‘owner_admin’: ‘owner_password’
+‘manager’: ‘manager_password’
+‘waiter’: ‘waiter_password’
+‘chef’: ‘chef_password’
+Note: to start using the application we recommend signing in as a manager in order to have access to the full functionality of the application
 
-1. Install Python 3.8 or a later version from [Python's download page](https://www.python.org/downloads/).
+Personal Login/Authentication: 
+When starting the application, you'll be prompted to enter a personal username and password. These credentials are used to authenticate the user and associate them with a specific restaurant. If the credentials are correct, the application proceeds to the main dashboard.
+The database is initialized with some users that you can sign in as to test it out
+If you want to be a manager use the following username and password: ‘alee’, ‘password’
+If you want to be a waiter use ‘echen’, ‘password’
+If you want to be a chef use ‘jdoe’, ‘password’
+Note: if you sign in as a manager you can create your own username and password by adding yourself as an employee.
 
-2. Install the required packages using the following command:
+Main Dashboard: 
+The main dashboard is the central point for navigating through the application's various features. It displays a list of options that the user can choose from:
 
-```bash
-...
-```
-5. Create a database using the given `CS5200_ResManagementDb.sql` file in MySQL
+Add an employee
+Display Employee List
+Remove Employee
+Add a menu item
+Remove a menu item
+Display Restaurant Menu
+Create New Order
+Add menu items to order
+Update an order's status
+Calculate a bill
+Exit the application
+Note: follow the prompts given after each selection!
 
-6. Start the application by running the following command from the root directory of the project:
-
-```bash
-python test.py
-```
-
-## Usage
-
-Upon running the application, you will be presented with a login screen. You can log in as the owner, manager, or staff member of the restaurant. You can use the following pre-set logins:
-
-| Username     | Password  | Role       |
-| ------------ | --------- | ---------- |
-| owner_admin  | password  | Owner      |
-| manager      | password  | Manager    |
-| staff        | password  | Staff      |
-
-After logging in, you will be taken to the corresponding dashboard. The dashboard displays the number of orders in progress.
-
-From the dashboard, you can access the following features:
-
-- Menu Management: allows you to display the menu items for a specific restaurant, add a new menu item, and remove a menu item.
-- Employee Management: allows you to add a new employee and remove an existing employee.
-
-To quit the application, simply enter `quit` at any time.
+Permissions:
+Managers and Owners are granted access to the full functionality of the application
+Waiters are not allowed to modify the menu nor add/remove employees.
+Chefs are allowed to modify the menu but not orders not employees. 

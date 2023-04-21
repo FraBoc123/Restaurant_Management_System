@@ -101,7 +101,7 @@ def add_menu_item(connection, restaurant_id):
     name = input("Enter the menu item name: ")
     description = input("Enter the menu item description: ")
     item_type = input("Enter the menu item type: ")
-    price = float(input("Enter the menu item price: "))
+    price = input("Enter the menu item price: ")
 
     cursor = connection.cursor()
 

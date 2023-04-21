@@ -1,12 +1,12 @@
-drop database if exists `resturantManagement`;
-CREATE DATABASE resturantManagement;
+drop database if exists `restaurantManagement`;
+CREATE DATABASE restaurantManagement;
 
-USE resturantManagement;
+USE restaurantManagement;
 
-drop table if exists `resturant`;
-CREATE TABLE resturant 
+drop table if exists `restaurant`;
+CREATE TABLE restaurant 
 (
-	resturant_id INT PRIMARY KEY,
+	restaurant_id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     address VARCHAR(150) NOT NULL,
     description VARCHAR(500) NOT NULL
@@ -18,11 +18,11 @@ CREATE TABLE employee
 (
 	employee_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    role VARCHAR(50) NOT NULL,
+    role ENUM('Manager', 'Chef', 'Waiter') NOT NULL,
     username VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
-    resturant_id INT,
-    FOREIGN KEY (resturant_id) REFERENCES resturant(resturant_id) ON UPDATE CASCADE ON DELETE CASCADE
+    restaurant_id INT,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurant(restaurant_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 
@@ -41,10 +41,10 @@ CREATE TABLE menu_items
 	menu_item_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description VARCHAR(500) NOT NULL,
-    item_type VARCHAR(100) NOT NULL,
+    item_type ENUM('Main', 'Appetizer', 'Dessert') NOT NULL,
     price DOUBLE NOT NULL,
-	resturant_id INT,
-    FOREIGN KEY (resturant_id) REFERENCES resturant(resturant_id) ON UPDATE CASCADE ON DELETE CASCADE
+	restaurant_id INT,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurant(restaurant_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- added auto increment
@@ -54,8 +54,8 @@ CREATE TABLE customer_group     -- NEED TO ADD RESTAURANT ID - MAYBE EACH RESTAU
 	customer_group_id INT AUTO_INCREMENT PRIMARY KEY,
     table_num INT NOT NULL,
     customer_num INT NOT NULL,
-    resturant_id INT NOT NULL,
-    FOREIGN KEY (resturant_id) REFERENCES resturant(resturant_id) ON UPDATE CASCADE ON DELETE CASCADE
+    restaurant_id INT NOT NULL,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurant(restaurant_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 drop table if exists `orders`;
@@ -116,13 +116,13 @@ DELIMITER $$
 CREATE PROCEDURE add_menu_item(
     IN name_p VARCHAR(255),
     IN description_p TEXT,
-    IN item_type_p VARCHAR(255),
+    IN item_type_p ENUM('Main', 'Appetizer', 'Dessert'),
     IN price_p DECIMAL(10, 2),
-    IN resturant_id_p INT
+    IN restaurant_id_p INT
 )
 BEGIN
-    INSERT INTO menu_items (name, description, item_type, price, resturant_id)
-    VALUES (name_p, description_p, item_type_p, price_p, resturant_id_p);
+	INSERT INTO menu_items (name, description, item_type, price, restaurant_id)
+	VALUES (name_p, description_p, item_type_p, price_p, restaurant_id_p);
 END $$
 DELIMITER ;
 
@@ -144,13 +144,13 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE add_employee(
     IN name_p VARCHAR(255),
-    IN role_p VARCHAR(255),
+    IN role_p ENUM('Manager', 'Chef', 'Waiter'),
     IN username_p VARCHAR(255),
     IN password_p VARCHAR(255),
     IN restaurant_id_p INT
 )
 BEGIN
-    INSERT INTO employee (name, role, username, password, resturant_id)
+    INSERT INTO employee (name, role, username, password, restaurant_id)
     VALUES (name_p, role_p, username_p, password_p, restaurant_id_p);
 END $$
 DELIMITER ;
@@ -180,7 +180,7 @@ CREATE PROCEDURE create_new_order(
 BEGIN
     DECLARE customer_group_id INT;
 
-    INSERT INTO customer_group (table_num, customer_num, resturant_id)
+    INSERT INTO customer_group (table_num, customer_num, restaurant_id)
     VALUES (table_num_p, customer_num_p, restaurant_id_p);
     
     SET customer_group_id = LAST_INSERT_ID();
@@ -254,25 +254,25 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE select_restaurant(
     IN username_p VARCHAR(255),
-    OUT resturant_id_p INT,
-    OUT resturant_name_p VARCHAR(255)
+    OUT restaurant_id_p INT,
+    OUT restaurant_name_p VARCHAR(255)
 )
 BEGIN
     DECLARE done INT DEFAULT FALSE;
     DECLARE cur CURSOR FOR
-        SELECT r.resturant_id, r.name
+        SELECT r.restaurant_id, r.name
         FROM employee re
-        JOIN resturant r ON re.resturant_id = r.resturant_id
+        JOIN restaurant r ON re.restaurant_id = r.restaurant_id
         WHERE re.username = username_p;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
     OPEN cur;
     
     IF done THEN
-        SET resturant_id_p = NULL;
-        SET resturant_name_p = NULL;
+        SET restaurant_id_p = NULL;
+        SET restaurant_name_p = NULL;
     ELSE
-        FETCH cur INTO resturant_id_p, resturant_name_p;
+        FETCH cur INTO restaurant_id_p, restaurant_name_p;
     END IF;
     
     CLOSE cur;
@@ -284,12 +284,12 @@ DELIMITER ;
 
 
 -- inserting values into tables
-INSERT INTO resturant (resturant_id, name, address, description)
+INSERT INTO restaurant (restaurant_id, name, address, description)
 VALUES (1, 'La Trattoria', '123 Main St', 'Italian cuisine at its finest'),
        (2, 'Le Bistro', '456 Elm St', 'French-inspired dishes in a cozy atmosphere'),
        (3, 'El Taquito', '789 Maple Ave', 'Authentic Mexican food made with fresh ingredients');
 
-INSERT INTO employee (employee_id, name, role, username, password, resturant_id)
+INSERT INTO employee (employee_id, name, role, username, password, restaurant_id)
 VALUES (1, 'John Smith', 'Manager', 'jsmith', 'password', 1),
        (2, 'Jane Doe', 'Chef', 'jdoe', 'password', 1),
        (3, 'Bob Johnson', 'Waiter', 'bjohnson', 'password', 1),
@@ -309,7 +309,7 @@ VALUES (1, 'Manager', '10:00:00', '2023-04-06'),
        (6, 'Waiter', '20:00:00', '2023-04-06');
 
 
-INSERT INTO menu_items (menu_item_id, name, description, item_type, price, resturant_id)
+INSERT INTO menu_items (menu_item_id, name, description, item_type, price, restaurant_id)
 VALUES
   (1, 'Spaghetti Bolognese', 'Classic Italian spaghetti with tomato sauce and ground beef', 'Main', 12.99, 1),
   (2, 'Margherita Pizza', 'Classic Italian pizza with tomato sauce, mozzarella, and basil', 'Main', 9.99, 1),
@@ -318,7 +318,7 @@ VALUES
   (5, 'Tiramisu', 'Classic Italian dessert with ladyfingers, espresso, mascarpone cheese, and cocoa', 'Dessert', 7.99, 1);
 
 
-INSERT INTO customer_group (customer_group_id, table_num, customer_num, resturant_id) 
+INSERT INTO customer_group (customer_group_id, table_num, customer_num, restaurant_id) 
 VALUES   
   (1, 1, 2, 1),   
   (2, 2, 4, 1),   
@@ -382,45 +382,45 @@ VALUES
 
 drop user if exists 'owner_admin'@'localhost';
 CREATE USER 'owner_admin'@'localhost' IDENTIFIED BY 'owner_password';
-GRANT ALL PRIVILEGES ON resturantManagement.* TO 'owner_admin'@'localhost';
-GRANT EXECUTE ON resturantmanagement.* TO 'owner_admin'@'localhost';
+GRANT ALL PRIVILEGES ON restaurantManagement.* TO 'owner_admin'@'localhost';
+GRANT EXECUTE ON restaurantmanagement.* TO 'owner_admin'@'localhost';
 -- Manager
 
 drop user if exists 'manager'@'localhost';
 CREATE USER 'manager'@'localhost' IDENTIFIED BY 'manager_password';
-GRANT EXECUTE ON resturantmanagement.* TO 'manager'@'localhost';
+GRANT EXECUTE ON restaurantmanagement.* TO 'manager'@'localhost';
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON resturantManagement.* TO 'manager'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON restaurantManagement.* TO 'manager'@'localhost';
 
 
 
 -- Chef
 drop user if exists 'chef'@'localhost';
 CREATE USER 'chef'@'localhost' IDENTIFIED BY 'chef';
-GRANT SELECT ON resturantManagement.employee TO 'chef'@'localhost';
-GRANT SELECT ON resturantManagement.resturant TO 'chef'@'localhost';
-GRANT SELECT, INSERT, UPDATE, DELETE ON resturantManagement.menu_items TO 'chef'@'localhost';
-GRANT SELECT ON resturantManagement.orders TO 'chef'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.add_menu_item TO 'chef'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.remove_menu_item TO 'chef'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.update_order_status TO 'chef'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.calculate_bill TO 'chef'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.select_restaurant TO 'chef'@'localhost';
+GRANT SELECT ON restaurantManagement.employee TO 'chef'@'localhost';
+GRANT SELECT ON restaurantManagement.restaurant TO 'chef'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON restaurantManagement.menu_items TO 'chef'@'localhost';
+GRANT SELECT ON restaurantManagement.orders TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.add_menu_item TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.remove_menu_item TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.update_order_status TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.calculate_bill TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.select_restaurant TO 'chef'@'localhost';
 
 
 -- Waiter
 drop user if exists 'waiter'@'localhost';
 CREATE USER 'waiter'@'localhost' IDENTIFIED BY 'waiter';
-GRANT SELECT, INSERT ON resturantManagement.orders TO 'waiter'@'localhost';
-GRANT SELECT ON resturantManagement.employee TO 'waiter'@'localhost';
-GRANT SELECT ON resturantManagement.resturant TO 'waiter'@'localhost';
-GRANT SELECT ON resturantManagement.menu_items TO 'waiter'@'localhost';
-GRANT SELECT, UPDATE ON resturantManagement.orders TO 'waiter'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantManagement.create_new_order TO 'waiter'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.add_menu_order TO 'waiter'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.update_order_status TO 'waiter'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.calculate_bill TO 'waiter'@'localhost';
-GRANT EXECUTE ON PROCEDURE resturantmanagement.select_restaurant TO 'waiter'@'localhost';
+GRANT SELECT, INSERT ON restaurantManagement.orders TO 'waiter'@'localhost';
+GRANT SELECT ON restaurantManagement.employee TO 'waiter'@'localhost';
+GRANT SELECT ON restaurantManagement.restaurant TO 'waiter'@'localhost';
+GRANT SELECT ON restaurantManagement.menu_items TO 'waiter'@'localhost';
+GRANT SELECT, UPDATE ON restaurantManagement.orders TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantManagement.create_new_order TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.add_menu_order TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.update_order_status TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.calculate_bill TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE restaurantmanagement.select_restaurant TO 'waiter'@'localhost';
 
 
 

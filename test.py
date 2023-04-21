@@ -29,11 +29,13 @@ def create_connection():
     print("Database Connection Established \n")
     return connection
 
+
 # Closes Database Connection
 def close_connection(connection):
     if connection.is_connected():
         connection.close()
         print("MySQL connection is closed")
+
 
 # Login to an employee account
 def login(connection):
@@ -63,40 +65,6 @@ def login(connection):
 
     return user_role, username
 
-# def login():
-#     username = input("Enter your username: ")
-#     password = getpass("Enter your password: ")
-#
-#     connection = None
-#     user_role = None
-#
-#     try:
-#         connection = create_connection(username, password)
-#         cursor = connection.cursor()
-#
-#         # Check if the username is one of the pre-set logins
-#         if username in ["owner_admin", "manager", "staff"]:
-#             user_role = username
-#         else:
-#             query = """
-#                 SELECT role FROM employee WHERE username = %s;
-#             """
-#
-#             cursor.execute(query, (username,))
-#             result = cursor.fetchone()
-#
-#             if result:
-#                 user_role = result[0]
-#             else:
-#                 print("Invalid username or password.")
-#                 return None, None
-#
-#     except mysql.connector.Error as error:
-#         print("Invalid username or password.")
-#         return None, None
-#
-#     return connection, user_role
-
 
 # DASHBOARD
 def dashboard(connection):
@@ -114,11 +82,6 @@ def dashboard(connection):
     print(f"Orders in progress: {orders_in_progress}")
 
 
-# Add your dashboard logic here
-#
-
-#MENU MANAGEMENT
-
 def display_restaurant_menu(connection, restaurant_id):
     cursor = connection.cursor()
 
@@ -133,24 +96,7 @@ def display_restaurant_menu(connection, restaurant_id):
     for item in menu_items:
         print(f"ID: {item[0]}, Name: {item[1]}, Description: {item[2]}, Type: {item[3]}, Price: {item[4]}, Restaurant ID: {item[5]}")
 
-# def add_menu_item(connection, restaurant_id):
-#     name = input("Enter the menu item name: ")
-#     description = input("Enter the menu item description: ")
-#     item_type = input("Enter the menu item type: ")
-#     price = float(input("Enter the menu item price: "))
-#     resturant_id = restaurant_id
-#
-#     cursor = connection.cursor()
-#
-#     query = """
-#         INSERT INTO menu_items (name, description, item_type, price, resturant_id)
-#         VALUES (%s, %s, %s, %s, %s);
-#     """
-#
-#     cursor.execute(query, (name, description, item_type, price, resturant_id))
-#     connection.commit()
-#
-#     print("New menu item added successfully!")
+
 def add_menu_item(connection, restaurant_id):
     name = input("Enter the menu item name: ")
     description = input("Enter the menu item description: ")
@@ -172,23 +118,6 @@ def add_menu_item(connection, restaurant_id):
         print(f"Error: {e}")
 
 
-# def remove_menu_item(connection): #need to fix (should remove based on restaurant)
-#     menu_item_id = int(input("Enter the menu item ID to remove: "))
-#
-#     cursor = connection.cursor()
-#
-#     query = """
-#         DELETE FROM menu_items
-#         WHERE menu_item_id = %s;
-#     """
-#
-#     cursor.execute(query, (menu_item_id,))
-#     connection.commit()
-#
-#     if cursor.rowcount > 0:
-#         print(f"Menu item ID {menu_item_id} removed successfully!")
-#     else:
-#         print(f"No menu item found with ID {menu_item_id}")
 def remove_menu_item(connection):
     menu_item_id = int(input("Enter the menu item ID to remove: "))
 
@@ -212,6 +141,7 @@ def remove_menu_item(connection):
     except Exception as e:
         print(f"Error: {e}")
 
+
 def display_menu(connection): #need to make for specific restaurant
     cursor = connection.cursor()
 
@@ -226,25 +156,7 @@ def display_menu(connection): #need to make for specific restaurant
     for item in menu_items:
         print(f"ID: {item[0]}, Name: {item[1]}, Description: {item[2]}, Type: {item[3]}, Price: {item[4]}, Restaurant ID: {item[5]}")
 
-#EMPLOYEE MANAGEMENT
-# def add_employee(connection, restaurant_id):
-#     name = input("Enter the employee name: ")
-#     role = input("Enter the employee role: ")
-#     username = input("Enter the employee username: ")
-#     password = input("Enter the employee password: ")
-#     resturant_id = restaurant_id
-#
-#     cursor = connection.cursor()
-#
-#     query = """
-#         INSERT INTO employee (name, role, username, password, resturant_id)
-#         VALUES (%s, %s, %s, %s, %s);
-#     """
-#
-#     cursor.execute(query, (name, role, username, password, resturant_id))
-#     connection.commit()
-#
-#     print("New employee added successfully!")
+
 def add_employee(connection, restaurant_id):
     name = input("Enter the employee name: ")
     role = input("Enter the employee role: ")
@@ -265,23 +177,7 @@ def add_employee(connection, restaurant_id):
     except Exception as e:
         print(f"Error: {e}")
 
-# def remove_employee(connection): # need to write from which restaurant? maybe not
-#     employee_id = int(input("Enter the employee ID to remove: "))
-#
-#     cursor = connection.cursor()
-#
-#     query = """
-#         DELETE FROM employee
-#         WHERE employee_id = %s;
-#     """
-#
-#     cursor.execute(query, (employee_id,))
-#     connection.commit()
-#
-#     if cursor.rowcount > 0:
-#         print(f"Employee ID {employee_id} removed successfully!")
-#     else:
-#         print(f"No employee found with ID {employee_id}")
+
 def remove_employee(connection):
     employee_id = int(input("Enter the employee ID to remove: "))
 
@@ -305,6 +201,7 @@ def remove_employee(connection):
     except Exception as e:
         print(f"Error: {e}")
 
+
 def display_employee_list(connection, restaurant_id): #NEED TO MAKE THIS BY RESTAURANT
     cursor = connection.cursor()
 
@@ -319,50 +216,7 @@ def display_employee_list(connection, restaurant_id): #NEED TO MAKE THIS BY REST
     for employee in employees:
         print(f"ID: {employee[0]}, Name: {employee[1]}, Role: {employee[2]}, Username: {employee[3]}, Resturant ID: {employee[5]}")
 
-#ORDER MANAGEMENT
 
-# def create_new_order(connection, restaurant_id):
-#     # try:
-#     with connection.cursor() as cursor:
-#         table_num = int(input("Enter the table number: "))
-#         customer_num = int(input("Enter the number of customers: "))
-#
-#         cursor = connection.cursor()
-#
-#         query = """
-#             INSERT INTO customer_group (table_num, customer_num, resturant_id)
-#             VALUES (%s, %s, %s);
-#         """
-#
-#         cursor.execute(query, (table_num, customer_num, restaurant_id))
-#         connection.commit()
-#         customer_group_id = cursor.lastrowid
-#
-#         query = """
-#             INSERT INTO orders (customer_group_id, status)
-#             VALUES (%s, 'In Progress');
-#         """
-#
-#         cursor.execute(query, (customer_group_id,))
-#         connection.commit()
-#         order_id = cursor.lastrowid
-#
-#         while True:
-#             menu_item_id = int(input("Enter the dish ID: "))
-#             quantity = int(input("Enter the quantity: "))
-#
-#             query = """
-#                 call add_menu_order(%s, %s, %s, @message);
-#             """
-#
-#             cursor.execute(query, (menu_item_id, order_id, quantity))
-#             connection.commit()
-#
-#             more_dishes = input("Do you want to add more dishes? (yes/no): ")
-#             if more_dishes.lower() != 'yes':
-#                 break
-#
-#         return order_id
 def create_new_order(connection, restaurant_id):
     table_num = int(input("Enter the table number: "))
     customer_num = int(input("Enter the number of customers: "))
@@ -395,29 +249,7 @@ def create_new_order(connection, restaurant_id):
 
     return order_id
 
-    # except Exception as e:
-    #     print(f"Error: {e}")
-    #     return None
 
-
-# def add_menu_items_to_order(connection, order_id):
-#     while True:
-#         menu_item_id = int(input("Enter the menu item ID to add (0 to stop): "))
-#         if menu_item_id == 0:
-#             break
-#
-#         amount = int(input("Enter the amount of the menu item: "))
-#
-#         cursor = connection.cursor()
-#
-#         query = """
-#             call add_menu_order(%s, %s, %s);
-#         """
-#
-#         cursor.execute(query, (menu_item_id, order_id, amount))
-#         connection.commit()
-#
-#         print(f"Added {amount} of menu item ID {menu_item_id} to Order ID {order_id}")
 def add_menu_items_to_order(connection, order_id): #showing example of how to show sql error (for the rest of the functions we used python for error handling)
     while True:
         menu_item_id = int(input("Enter the menu item ID to add (0 to stop): "))
@@ -443,29 +275,6 @@ def add_menu_items_to_order(connection, order_id): #showing example of how to sh
             print(f"Error: {e}")
 
 
-
-
-
-
-# def update_order_status(connection, order_id):
-#     incorrectStatus = True
-#
-#     while incorrectStatus:
-#         new_status = input("Enter the new order status (In Progress, Complete): ")
-#         incorrectStatus = not (new_status.lower() == "in progress" or new_status.lower() == "complete")
-#
-#     cursor = connection.cursor()
-#
-#     query = """
-#         UPDATE orders
-#         SET status = %s
-#         WHERE order_id = %s;
-#     """
-#
-#     cursor.execute(query, (new_status, order_id))
-#     connection.commit()
-#
-#     print(f"Order ID {order_id} status updated to {new_status}")
 def update_order_status(connection, order_id):
     incorrectStatus = True
 
@@ -486,6 +295,7 @@ def update_order_status(connection, order_id):
 
     except Exception as e:
         print(f"Error: {e}")
+
 
 def calculate_bill(connection, order_id):
     try:
@@ -518,36 +328,7 @@ def calculate_bill(connection, order_id):
     except:
         print("error")
 
-#PROMPT USER FOR RESTAURANT BEFORE SHOWING DASHBOARD
 
-# def select_restaurant(connection, username):
-#     with connection.cursor() as cursor:
-#         query = """
-#         SELECT r.resturant_id, r.name
-#         FROM employee re
-#         JOIN resturant r ON re.resturant_id = r.resturant_id
-#         WHERE re.username = %s;
-#         """
-#         cursor.execute(query, (username,))
-#         restaurants = cursor.fetchall()
-#
-#         if len(restaurants) == 0:
-#             print("You are not associated with any restaurants.")
-#             return None
-#
-#         print("\nPlease select a restaurant:")
-#         for i, restaurant in enumerate(restaurants):
-#             print(f"{i + 1}. {restaurant[1]}")
-#
-#         while True:
-#             try:
-#                 choice = int(input("Enter the number corresponding to the restaurant: "))
-#                 if 1 <= choice <= len(restaurants):
-#                     return restaurants[choice - 1][0]
-#                 else:
-#                     print("Invalid choice. Please try again.")
-#             except ValueError:
-#                 print("Invalid input. Please enter a number.")
 def select_restaurant(connection, username):
     cursor = connection.cursor()
 
@@ -566,7 +347,6 @@ def select_restaurant(connection, username):
     resturant_id, resturant_name = restaurant
     print(f"Selected restaurant: {resturant_name}")
     return resturant_id
-
 
 
 def main():

@@ -16,7 +16,7 @@ def create_connection():
                 host="localhost",
                 user=username,
                 password=password,
-                database="resturantManagement",
+                database="restaurantManagement",
                 auth_plugin="mysql_native_password"
             )
 
@@ -86,7 +86,7 @@ def display_restaurant_menu(connection, restaurant_id):
     cursor = connection.cursor()
 
     query = """
-        SELECT * FROM menu_items WHERE resturant_id = %s;
+        SELECT * FROM menu_items WHERE restaurant_id = %s;
     """
 
     cursor.execute(query, (restaurant_id,))
@@ -100,7 +100,7 @@ def display_restaurant_menu(connection, restaurant_id):
 def add_menu_item(connection, restaurant_id):
     name = input("Enter the menu item name: ")
     description = input("Enter the menu item description: ")
-    item_type = input("Enter the menu item type: ")
+    item_type = input("Enter the menu item type (Main, Appetizer, Dessert): ")
     price = input("Enter the menu item price: ")
 
     cursor = connection.cursor()
@@ -159,7 +159,7 @@ def display_menu(connection): #need to make for specific restaurant
 
 def add_employee(connection, restaurant_id):
     name = input("Enter the employee name: ")
-    role = input("Enter the employee role: ")
+    role = input("Enter the employee role (Manager, Chef, Waiter): ")
     username = input("Enter the employee username: ")
     password = input("Enter the employee password: ")
 
@@ -206,7 +206,7 @@ def display_employee_list(connection, restaurant_id): #NEED TO MAKE THIS BY REST
     cursor = connection.cursor()
 
     query = """
-            SELECT * FROM employee WHERE resturant_id = %s;
+            SELECT * FROM employee WHERE restaurant_id = %s;
         """
 
     cursor.execute(query, (restaurant_id,))
@@ -214,7 +214,7 @@ def display_employee_list(connection, restaurant_id): #NEED TO MAKE THIS BY REST
 
     print("Employee List:")
     for employee in employees:
-        print(f"ID: {employee[0]}, Name: {employee[1]}, Role: {employee[2]}, Username: {employee[3]}, Resturant ID: {employee[5]}")
+        print(f"ID: {employee[0]}, Name: {employee[1]}, Role: {employee[2]}, Username: {employee[3]}, Restaurant ID: {employee[5]}")
 
 
 def create_new_order(connection, restaurant_id):
@@ -333,20 +333,20 @@ def select_restaurant(connection, username):
     cursor = connection.cursor()
 
     query = """
-        CALL select_restaurant(%s, @resturant_id, @resturant_name);
+        CALL select_restaurant(%s, @restaurant_id, @restaurant_name);
     """
 
     cursor.execute(query, (username,))
-    cursor.execute("SELECT @resturant_id, @resturant_name")
+    cursor.execute("SELECT @restaurant_id, @restaurant_name")
     restaurant = cursor.fetchone()
 
     if not restaurant or restaurant[0] is None:
         print("You are not associated with any restaurants.")
         return None
 
-    resturant_id, resturant_name = restaurant
-    print(f"Selected restaurant: {resturant_name}")
-    return resturant_id
+    restaurant_id, restaurant_name = restaurant
+    print(f"Selected restaurant: {restaurant_name}")
+    return restaurant_id
 
 
 def main():

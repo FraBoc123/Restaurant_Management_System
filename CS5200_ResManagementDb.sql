@@ -109,20 +109,106 @@ CREATE TABLE menu_ingredients
 
 
 -- create procedures
-drop procedure if exists add_menu_order;
 
+-- add menu item
+drop procedure if exists add_menu_item;
+DELIMITER $$
+CREATE PROCEDURE add_menu_item(
+    IN name_p VARCHAR(255),
+    IN description_p TEXT,
+    IN item_type_p VARCHAR(255),
+    IN price_p DECIMAL(10, 2),
+    IN resturant_id_p INT
+)
+BEGIN
+    INSERT INTO menu_items (name, description, item_type, price, resturant_id)
+    VALUES (name_p, description_p, item_type_p, price_p, resturant_id_p);
+END $$
+DELIMITER ;
+
+-- remove menu item
+DELIMITER $$
+CREATE PROCEDURE remove_menu_item(
+    IN menu_item_id_p INT,
+    OUT affected_rows_p INT
+)
+BEGIN
+    DELETE FROM menu_items
+    WHERE menu_item_id = menu_item_id_p;
+    
+    SET affected_rows_p = ROW_COUNT();
+END $$
+DELIMITER ;
+
+-- add employee
+DELIMITER $$
+CREATE PROCEDURE add_employee(
+    IN name_p VARCHAR(255),
+    IN role_p VARCHAR(255),
+    IN username_p VARCHAR(255),
+    IN password_p VARCHAR(255),
+    IN restaurant_id_p INT
+)
+BEGIN
+    INSERT INTO employee (name, role, username, password, resturant_id)
+    VALUES (name_p, role_p, username_p, password_p, restaurant_id_p);
+END $$
+DELIMITER ;
+
+-- remove employee
+DELIMITER $$
+CREATE PROCEDURE remove_employee(
+    IN employee_id_p INT,
+    OUT affected_rows_p INT
+)
+BEGIN
+    DELETE FROM employee
+    WHERE employee_id = employee_id_p;
+    
+    SET affected_rows_p = ROW_COUNT();
+END $$
+DELIMITER ;
+
+-- create new order
+DELIMITER $$
+CREATE PROCEDURE create_new_order(
+    IN table_num_p INT,
+    IN customer_num_p INT,
+    IN restaurant_id_p INT,
+    OUT order_id_p INT
+)
+BEGIN
+    DECLARE customer_group_id INT;
+
+    INSERT INTO customer_group (table_num, customer_num, resturant_id)
+    VALUES (table_num_p, customer_num_p, restaurant_id_p);
+    
+    SET customer_group_id = LAST_INSERT_ID();
+
+    INSERT INTO orders (customer_group_id, status)
+    VALUES (customer_group_id, 'In Progress');
+    
+    SET order_id_p = LAST_INSERT_ID();
+END $$
+DELIMITER ;
+
+
+
+-- add_menu_order
+drop procedure if exists add_menu_order;
 delimiter $$
-create procedure add_menu_order(menu_item_id_p INT, order_id_p INT, amount_p INT)
-	begin
-        if (select exists(select * from menu_items where menu_items.menu_item_id = menu_item_id_p)) then
-			INSERT INTO menu_order (menu_item_id, order_id, amount)
-            VALUES (menu_item_id_p, order_id_p, amount_p)
-            ON DUPLICATE KEY UPDATE amount = amount + amount_p;
-		else
-			select 'Menu Item Not Available';
-			signal sqlstate '42000' set message_text = 'Menu Item not found';
-		end if;
-    end $$
+create procedure add_menu_order(menu_item_id_p INT, order_id_p INT, amount_p INT, OUT message_p VARCHAR(255))
+begin
+    if (select exists(select * from menu_items where menu_items.menu_item_id = menu_item_id_p)) then
+        INSERT INTO menu_order (menu_item_id, order_id, amount)
+        VALUES (menu_item_id_p, order_id_p, amount_p)
+        ON DUPLICATE KEY UPDATE amount = amount + amount_p;
+        set message_p = 'Menu Item Added';
+    else
+        set message_p = 'Menu Item Not Available';
+        signal sqlstate '42000' set message_text = 'Menu Item not found';
+    end if;
+end $$
 delimiter ;
 
 drop procedure if exists get_order_details;
@@ -136,6 +222,64 @@ create procedure get_order_details(order_id_p INT)
         WHERE menu_order.order_id = order_id_p;
     end $$
 delimiter ;
+
+-- update order status
+DELIMITER $$
+CREATE PROCEDURE update_order_status(
+    IN order_id_p INT,
+    IN new_status_p ENUM('In Progress', 'Complete')
+)
+BEGIN
+    UPDATE orders
+    SET status = new_status_p
+    WHERE order_id = order_id_p;
+END $$
+DELIMITER ;
+
+-- calculate bill
+DELIMITER $$
+CREATE PROCEDURE calculate_bill(
+    IN order_id_p INT
+)
+BEGIN
+    SELECT menu_items.menu_item_id, menu_items.name, menu_items.price, menu_order.amount,
+        (menu_items.price * menu_order.amount) AS item_total_price
+    FROM menu_items
+    INNER JOIN menu_order ON menu_items.menu_item_id = menu_order.menu_item_id
+    WHERE menu_order.order_id = order_id_p;
+END $$
+DELIMITER ;
+
+-- select restaurant
+DELIMITER $$
+CREATE PROCEDURE select_restaurant(
+    IN username_p VARCHAR(255),
+    OUT resturant_id_p INT,
+    OUT resturant_name_p VARCHAR(255)
+)
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE cur CURSOR FOR
+        SELECT r.resturant_id, r.name
+        FROM employee re
+        JOIN resturant r ON re.resturant_id = r.resturant_id
+        WHERE re.username = username_p;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+    
+    IF done THEN
+        SET resturant_id_p = NULL;
+        SET resturant_name_p = NULL;
+    ELSE
+        FETCH cur INTO resturant_id_p, resturant_name_p;
+    END IF;
+    
+    CLOSE cur;
+END $$
+DELIMITER ;
+
+
 
 
 
@@ -239,22 +383,46 @@ VALUES
 drop user if exists 'owner_admin'@'localhost';
 CREATE USER 'owner_admin'@'localhost' IDENTIFIED BY 'owner_password';
 GRANT ALL PRIVILEGES ON resturantManagement.* TO 'owner_admin'@'localhost';
-
+GRANT EXECUTE ON resturantmanagement.* TO 'owner_admin'@'localhost';
 -- Manager
 
 drop user if exists 'manager'@'localhost';
 CREATE USER 'manager'@'localhost' IDENTIFIED BY 'manager_password';
+GRANT EXECUTE ON resturantmanagement.* TO 'manager'@'localhost';
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON resturantManagement.* TO 'manager'@'localhost';
+
+
 
 -- Chef
 drop user if exists 'chef'@'localhost';
 CREATE USER 'chef'@'localhost' IDENTIFIED BY 'chef';
+GRANT SELECT ON resturantManagement.employee TO 'chef'@'localhost';
+GRANT SELECT ON resturantManagement.resturant TO 'chef'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON resturantManagement.menu_items TO 'chef'@'localhost';
+GRANT SELECT ON resturantManagement.orders TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.add_menu_item TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.remove_menu_item TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.update_order_status TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.calculate_bill TO 'chef'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.select_restaurant TO 'chef'@'localhost';
 
--- Server
+
+-- Waiter
 drop user if exists 'waiter'@'localhost';
 CREATE USER 'waiter'@'localhost' IDENTIFIED BY 'waiter';
 GRANT SELECT, INSERT ON resturantManagement.orders TO 'waiter'@'localhost';
+GRANT SELECT ON resturantManagement.employee TO 'waiter'@'localhost';
+GRANT SELECT ON resturantManagement.resturant TO 'waiter'@'localhost';
+GRANT SELECT ON resturantManagement.menu_items TO 'waiter'@'localhost';
+GRANT SELECT, UPDATE ON resturantManagement.orders TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantManagement.create_new_order TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.add_menu_order TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.update_order_status TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.calculate_bill TO 'waiter'@'localhost';
+GRANT EXECUTE ON PROCEDURE resturantmanagement.select_restaurant TO 'waiter'@'localhost';
+
+
 
 -- Apply the changes
 FLUSH PRIVILEGES;
@@ -277,5 +445,4 @@ ALTER USER 'owner_admin'@'localhost' IDENTIFIED BY 'owner_password';
 ALTER USER 'manager'@'localhost' IDENTIFIED BY 'manager_password';
 ALTER USER 'waiter'@'localhost' IDENTIFIED BY 'waiter_password';
 ALTER USER 'chef'@'localhost' IDENTIFIED BY 'chef_password';
-
 

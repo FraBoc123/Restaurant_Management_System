@@ -1,0 +1,43 @@
+
+
+## Restaurant Management System
+
+This is a console-based application that simulates a restaurant management system. This application is built using Python 3.8 and uses MySQL for its database. The system allows restaurant staff to manage the menu and orders, and the system's owner to manage the restaurant staff and other administrative tasks. 
+
+## Installation
+
+To use the Restaurant Management System, follow these steps:
+
+1. Install Python 3.8 or a later version from [Python's download page](https://www.python.org/downloads/).
+
+2. Install the required packages using the following command:
+
+```bash
+...
+```
+5. Create a database using the given `CS5200_ResManagementDb.sql` file in MySQL
+
+6. Start the application by running the following command from the root directory of the project:
+
+```bash
+python test.py
+```
+
+## Usage
+
+Upon running the application, you will be presented with a login screen. You can log in as the owner, manager, or staff member of the restaurant. You can use the following pre-set logins:
+
+| Username     | Password  | Role       |
+| ------------ | --------- | ---------- |
+| owner_admin  | password  | Owner      |
+| manager      | password  | Manager    |
+| staff        | password  | Staff      |
+
+After logging in, you will be taken to the corresponding dashboard. The dashboard displays the number of orders in progress.
+
+From the dashboard, you can access the following features:
+
+- Menu Management: allows you to display the menu items for a specific restaurant, add a new menu item, and remove a menu item.
+- Employee Management: allows you to add a new employee and remove an existing employee.
+
+To quit the application, simply enter `quit` at any time.
